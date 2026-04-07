@@ -14,6 +14,7 @@ import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.dao.UserStorage;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class ItemService {
@@ -87,7 +88,7 @@ public class ItemService {
         if (itemStorage.getItemById(itemId).getId() == 0) {
             throw new ValidateException("id isn't correct");
         }
-        if (itemStorage.getItemById(itemId).getOwner() != ownerId) {
+        if (!Objects.equals(itemStorage.getItemById(itemId).getOwner(), ownerId)) {
             throw new ValidateException("Email is already exist");
         }
     }
