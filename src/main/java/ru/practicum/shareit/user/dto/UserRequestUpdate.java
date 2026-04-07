@@ -5,7 +5,6 @@ import lombok.Data;
 
 @Data
 public class UserRequestUpdate {
-    //private long id;
     private String name;
 
     @Pattern(regexp = "\\S*", message = "Invalid email. Example: Login1@domain.com")

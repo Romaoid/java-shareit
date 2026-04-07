@@ -10,18 +10,18 @@ import ru.practicum.shareit.item.model.Item;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class ItemMapper {
 
-    public ItemDto mapToItemDto(Item item) {
+    public static ItemDto mapToItemDto(Item item) {
         ItemDto dto = new ItemDto();
 
         dto.setId(item.getId());
-        dto.setAvailable(item.isAvailable());
+        dto.setAvailable(item.getAvailable());
         dto.setDescription(item.getDescription());
         dto.setName(item.getName());
 
         return dto;
     }
 
-    public Item mapItemFromCreateReq(ItemRequestCreate itemRequestCreate) {
+    public static Item mapItemFromCreateReq(ItemRequestCreate itemRequestCreate) {
         Item item = new Item();
         item.setName(itemRequestCreate.getName());
         item.setAvailable(itemRequestCreate.getAvailable());
@@ -30,7 +30,7 @@ public class ItemMapper {
         return item;
     }
 
-    public Item mapItemFromUpdateReq(ItemRequestUpdate itemRequestUpdate) {
+    public static Item mapItemFromUpdateReq(ItemRequestUpdate itemRequestUpdate) {
         Item item = new Item();
 
         if (itemRequestUpdate.isNameNotNull()) {
