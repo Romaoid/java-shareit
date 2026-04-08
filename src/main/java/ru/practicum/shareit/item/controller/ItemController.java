@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import ru.practicum.shareit.item.controller.constants.HttpHeaders;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.dto.ItemRequestCreate;
 import ru.practicum.shareit.item.dto.ItemRequestUpdate;
@@ -22,20 +23,20 @@ public class ItemController {
     private ItemService itemService;
 
     @PostMapping
-    public ItemDto addItem(@RequestHeader("X-Sharer-User-Id") long userId,
+    public ItemDto addItem(@RequestHeader(HttpHeaders.X_SHARER_USER_ID) long userId,
                            @Valid @RequestBody ItemRequestCreate newItem) {
         return itemService.addItem(userId, newItem);
     }
 
     @PatchMapping("/{itemId:\\d+}")
-    public ItemDto updateItem(@RequestHeader("X-Sharer-User-Id") long userId,
+    public ItemDto updateItem(@RequestHeader(HttpHeaders.X_SHARER_USER_ID) long userId,
                               @PathVariable long itemId,
                               @RequestBody ItemRequestUpdate updatedItem) {
         return itemService.updateItem(userId, itemId, updatedItem);
     }
 
     @GetMapping
-    public List<ItemDto> getItems(@RequestHeader("X-Sharer-User-Id") long userId) {
+    public List<ItemDto> getItems(@RequestHeader(HttpHeaders.X_SHARER_USER_ID) long userId) {
         return itemService.getItemsByOwnerId(userId);
     }
 
