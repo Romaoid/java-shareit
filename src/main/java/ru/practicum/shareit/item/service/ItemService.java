@@ -3,6 +3,7 @@ package ru.practicum.shareit.item.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.error.exception.NotFoundException;
 import ru.practicum.shareit.error.exception.ValidateException;
 import ru.practicum.shareit.item.dao.ItemStorage;
@@ -17,29 +18,31 @@ import java.util.List;
 import java.util.Objects;
 
 @Service
+@Transactional(readOnly = true)
 public class ItemService {
     private final ItemStorage itemStorage;
     private final UserStorage userStorage;
 
     @Autowired
-    public ItemService(@Qualifier("ItemStorTemp") ItemStorage itemStorage,
-                       @Qualifier("UserStorTemp") UserStorage userStorage) {
+    public ItemService(ItemStorage itemStorage,
+                       UserStorage userStorage) {
         this.itemStorage = itemStorage;
         this.userStorage = userStorage;
     }
 
-
+    @Transactional
     public ItemDto addItem(Long ownerId, ItemRequestCreate newItem) {
         validateOwner(ownerId);
 
         Item addedItem = ItemMapper.mapItemFromCreateReq(newItem);
         addedItem.setOwner(ownerId);
 
-        addedItem = itemStorage.addItem(addedItem);
+        addedItem = itemStorage.save(addedItem);
 
         return  ItemMapper.mapToItemDto(addedItem);
     }
 
+    @Transactional
     public ItemDto updateItem(Long ownerId, Long itemId, ItemRequestUpdate itemRequestUpdate) {
         validateUpdateRequest(ownerId,itemId);
 
@@ -47,7 +50,7 @@ public class ItemService {
         updatedItem.setOwner(ownerId);
         updatedItem.setId(itemId);
 
-        updatedItem = itemStorage.updateItem(updatedItem);
+        updatedItem = itemStorage.save(updatedItem);
 
         return ItemMapper.mapToItemDto(updatedItem);
     }
@@ -55,7 +58,7 @@ public class ItemService {
     public List<ItemDto> getItemsByOwnerId(Long ownerId) {
         validateOwner(ownerId);
 
-        return itemStorage.getItemsByOwnerId(ownerId)
+        return itemStorage.findItemsByUserId(ownerId)
                 .stream()
                 .map(ItemMapper::mapToItemDto)
                 .toList();
@@ -63,11 +66,11 @@ public class ItemService {
 
     public ItemDto getItemById(Long itemId) {
         return ItemMapper.mapToItemDto(
-                itemStorage.getItemById(itemId));
+                itemStorage.findItemById(itemId));
     }
 
     public List<ItemDto> getItemsBySearch(String text) {
-        return itemStorage.getItemsBySearch(text)
+        return itemStorage.search(text)
                 .stream()
                 .map(ItemMapper::mapToItemDto)
                 .toList();
@@ -77,7 +80,7 @@ public class ItemService {
         if (id == null) {
             throw new ValidateException("id isn't correct");
         }
-        if (userStorage.getUserById(id).getId() == 0) {
+        if (userStorage.findUserById(id).getId() == 0) {
             throw new NotFoundException("user not found");
         }
     }
@@ -85,10 +88,10 @@ public class ItemService {
     private void validateUpdateRequest(Long ownerId, Long itemId) {
         validateOwner(ownerId);
 
-        if (itemStorage.getItemById(itemId).getId() == 0) {
+        if (itemStorage.findItemById(itemId).getId() == 0) {
             throw new ValidateException("id isn't correct");
         }
-        if (!Objects.equals(itemStorage.getItemById(itemId).getOwner(), ownerId)) {
+        if (!Objects.equals(itemStorage.findItemById(itemId).getOwner(), ownerId)) {
             throw new ValidateException("Email is already exist");
         }
     }
