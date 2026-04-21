@@ -4,15 +4,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
-/**
- * TODO Sprint add-controllers.
- */
 @Data
-public class ItemDto {
-    private long id;
-//    private String description;
-//    private String name;
-//    private boolean available;
+public class ItemRequestCreate {
     @NotBlank(message = "Description is required")
     private String description;
     @NotBlank(message = "Name is required")
