@@ -13,9 +13,9 @@ import ru.practicum.shareit.booking.model.BookingStatus;
 import ru.practicum.shareit.error.exception.NotFoundException;
 import ru.practicum.shareit.error.exception.ValidateException;
 import ru.practicum.shareit.item.dao.ItemStorage;
+import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.dao.UserStorage;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -25,18 +25,16 @@ import java.util.Objects;
 public class BookingService {
     @Autowired
     private BookingStorage bookingStorage;
+    @Autowired
     private ItemStorage itemStorage;
+    @Autowired
     private UserStorage userStorage;
 
     @Transactional
     public BookingDto addBooking(Long bookerId, BookingRequest request) {
-        validateUserExisting(bookerId);
-        validateItemExisting(request.getItemId());
-        validateBookerIsNtOwner(bookerId, request.getItemId());
-        validateDates(request.getStart(), request.getEnd());
-        validateItemAvailable(request.getItemId());
-
         request.setBookerId(bookerId);
+
+        validateBookingRequest(request);
 
         Booking newBooking = bookingStorage.save(
                 BookingMapper.mapRequestToBooking(request));
@@ -49,18 +47,22 @@ public class BookingService {
 
     @Transactional
     public BookingDto updateBookingStatus(Long ownerId, Long bookingId, String newStatus) {
-        validateUserExisting(ownerId);
-        validateBookingExisting(bookingId);
-        validateStatusIsWaiting(bookingId);
-        validateUserIsOwner(ownerId, bookingId);
+        Booking updatedBooking = bookingStorage.findById(bookingId)
+                .orElseThrow(() -> new RuntimeException("error during status validation"));
+
+        if (updatedBooking.getStatus() != BookingStatus.WAITING) {
+            throw new ValidateException("item already have status: " + updatedBooking.getStatus());
+        }
+
+        if (!Objects.equals(updatedBooking.getItem().getOwner(), ownerId)) {
+            throw new ValidateException("User isn't owner this item");
+        }
 
         BookingStatus status = switch (newStatus.trim().toUpperCase()) {
-            case "APPROVED" -> BookingStatus.APPROVED;
-            case "REJECTED" -> BookingStatus.REJECTED;
+            case "APPROVED", "TRUE" -> BookingStatus.APPROVED;
+            case "REJECTED", "FALSE" -> BookingStatus.REJECTED;
             default -> throw new ValidateException("approved parameter should be approved/rejected");
         };
-
-        Booking updatedBooking = bookingStorage.getReferenceById(bookingId);
 
         updatedBooking.setStatus(status);
 
@@ -128,23 +130,27 @@ public class BookingService {
         }
     }
 
-    private void validateItemExisting(Long id) {
-        if (id == null) {
-            throw new ValidateException("id isn't correct");
-        }
-        if (!itemStorage.existsById(id)) {
-            throw new NotFoundException("item not found");
-        }
-    }
+    private void validateBookingRequest(BookingRequest request) {
+        validateUserExisting(request.getBookerId());
 
-    private void validateDates(LocalDateTime start, LocalDateTime end) {
-        if (!end.isAfter(start)) {
-            throw new ValidateException("The end date must be after the start date");
+        //NPE
+        if (request.getItemId() == null) {
+            throw new ValidateException("invalid itemId");
         }
-    }
 
-    private void validateItemAvailable(long id) {
-        if (itemStorage.findItemById(id).getAvailable() != true) {
+        //Наличие в бд
+        Item item = itemStorage.findById(request.getItemId())
+                .orElseThrow(() -> new NotFoundException("item not found"));
+
+        //User не шарил item
+        if (Objects.equals(
+                item.getOwner(),
+                request.getBookerId())) {
+            throw new ValidateException("User cant book his item");
+        }
+
+        //Available == true
+        if (item.getAvailable() == false) {
             throw new ValidateException("item is unavailable");
         }
     }
@@ -158,30 +164,8 @@ public class BookingService {
         }
     }
 
-    private void validateStatusIsWaiting(long id) {
-        BookingStatus status = bookingStorage.findById(id)
-                .orElseThrow(() -> new RuntimeException("error during status validation"))
-                .getStatus();
-
-        if (status != BookingStatus.WAITING) {
-            throw new ValidateException("item already have status: " + status);
-        }
-    }
-
-    private void validateBookerIsNtOwner(long userid, long itemId) {
-        if (Objects.equals(itemStorage.findItemById(itemId).getOwner(), userid)) {
-            throw new ValidateException("User cant book his item");
-        }
-    }
-
-    private void validateUserIsOwner(long userid, long itemId) {
-        if (!Objects.equals(itemStorage.findItemById(itemId).getOwner(), userid)) {
-            throw new ValidateException("User isn't owner this item");
-        }
-    }
-
     private void validateUserIsOwnerOrBooker(long userId, long bookerId, long ownerId) {
-        if ((!Objects.equals(userId, bookerId)) || (!Objects.equals(userId, ownerId))) {
+        if ((!Objects.equals(userId, bookerId)) && (!Objects.equals(userId, ownerId))) {
             throw new ValidateException("This function allow only to item's owner and booker");
         }
     }
@@ -196,7 +180,7 @@ public class BookingService {
     }
 
     private void validateUserShareItem(long id) {
-        if (itemStorage.findItemsByUserId(id).isEmpty()) {
+        if (!itemStorage.existsByOwner(id)) {
             throw new ValidateException("User " + id + " don't share items yet");
         }
     }

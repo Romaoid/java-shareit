@@ -1,7 +1,6 @@
 package ru.practicum.shareit.user.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.error.exception.NotFoundException;
@@ -41,16 +40,18 @@ public class UserService {
 
     @Transactional
     public UserDto updateUser(Long id, UserRequestUpdate updateUser) {
-        hasUserInStorage(id);
-        if (updateUser.getEmail() != null && !updateUser.getEmail().equals(userStorage.findUserById(id).getEmail())) {
+        User updatedUser = userStorage.findById(id)
+                .orElseThrow(() -> new NotFoundException("user not found"));
+
+        if (updateUser.getEmail() != null && !updateUser.getEmail().equals(updatedUser.getEmail())) {
             isMailInStorage(updateUser.getEmail());
         }
 
-        User user = UserMapper.mapUserFromUpdateReq(updateUser);
-        user.setId(id);
+        if (updateUser.isNameNotNull()) updatedUser.setName(updateUser.getName());
+        if (updateUser.isEmailNotNull()) updatedUser.setEmail(updateUser.getEmail());
 
         return UserMapper.mapToUserDto(
-                userStorage.save(user));
+                userStorage.save(updatedUser));
     }
 
     @Transactional
@@ -64,7 +65,7 @@ public class UserService {
         if (id == null) {
             throw new ValidateException("id isn't correct");
         }
-        if (userStorage.findUserById(id).getId() == 0) {
+        if (!userStorage.existsById(id)) {
             throw new NotFoundException("user not found");
         }
 
@@ -76,11 +77,7 @@ public class UserService {
             throw new ValidateException("Email isn't correct");
         }
 
-        long usersWithEmail = userStorage.findAll()
-                .stream()
-                .filter(user -> user.getEmail().equals(email))
-                .count();
-        if (usersWithEmail > 0) {
+        if (userStorage.findByEmail(email).isPresent()) {
             throw new RuntimeException("Email already exist!");
         }
     }

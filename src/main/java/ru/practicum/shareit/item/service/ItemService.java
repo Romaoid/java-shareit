@@ -18,8 +18,8 @@ import ru.practicum.shareit.item.mapper.ItemMapper;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.dao.UserStorage;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -30,16 +30,15 @@ import java.util.stream.Collectors;
 public class ItemService {
     @Autowired
     private ItemStorage itemStorage;
-    private UserStorage userStorage;
-    private BookingStorage bookingStorage;
-    private CommentStorage commentStorage;
 
-//    @Autowired
-//    public ItemService(ItemStorage itemStorage,
-//                       UserStorage userStorage) {
-//        this.itemStorage = itemStorage;
-//        this.userStorage = userStorage;
-//    }
+    @Autowired
+    private UserStorage userStorage;
+
+    @Autowired
+    private BookingStorage bookingStorage;
+
+    @Autowired
+    private CommentStorage commentStorage;
 
     @Transactional
     public ItemDto addItem(Long ownerId, ItemRequestCreate newItem) {
@@ -55,19 +54,28 @@ public class ItemService {
 
     @Transactional
     public ItemDto updateItem(Long ownerId, Long itemId, ItemRequestUpdate itemRequestUpdate) {
-        validateUpdateRequest(ownerId,itemId);
+        validateUser(ownerId);
+        Item updatedItem = itemStorage.findById(itemId)
+                .orElseThrow(() -> new NotFoundException("item not found"));
 
-        Item updatedItem = ItemMapper.mapItemFromUpdateReq(itemRequestUpdate);
-        updatedItem.setOwner(ownerId);
-        updatedItem.setId(itemId);
+        if (!Objects.equals(updatedItem.getOwner(), ownerId)) {
+            throw new ValidateException("item " + itemId + " shared by other user");
+        }
 
-        updatedItem = itemStorage.save(updatedItem);
-
-        return ItemMapper.mapToItemDto(updatedItem);
+        return ItemMapper.mapToItemDto(
+                itemStorage.save(
+                        ItemMapper.mapItemFromUpdateReq(updatedItem, itemRequestUpdate)
+                ));
     }
 
     public List<ItemDtoForOwner> getItemsByOwnerId(Long ownerId) {
         validateUser(ownerId);
+
+        List<Item> items = itemStorage.findItemsByOwner(ownerId);
+
+        if (items.isEmpty()) {
+            return Collections.emptyList();
+        }
 
         Map<Long, LocalDateTime> lastBookings = bookingStorage
                 .findLastBookingDatesByOwnerId(ownerId)
@@ -85,50 +93,65 @@ public class ItemService {
                         arr -> (LocalDateTime) arr[1]
                 ));
 
-        return itemStorage.findItemsByUserId(ownerId)
-                .stream()
+        List<Comment> allComments = commentStorage.findAllByItemIdIn(
+                items.stream().map(Item::getId).toList());
+
+        Map<Long, List<CommentDto>> commentsByItem = allComments.stream()
+                .collect(Collectors.groupingBy(
+                        comment -> comment.getItem().getId(),
+                        Collectors.mapping(CommentMapper::mapToCommentDto, Collectors.toList())
+                ));
+
+        return items.stream()
                 .map(item -> ItemMapper.mapToItemDto(
                         item,
                         lastBookings.get(item.getId()),
                         nextBookings.get(item.getId()),
-                        commentStorage.findByItemIdOrderByCreationDateAsc(item.getId())
-                                .stream()
-                                .map(CommentMapper::mapToCommentDto)
-                                .toList()
+                        commentsByItem.getOrDefault(item.getId(), Collections.emptyList())
                 ))
                 .toList();
     }
 
-    public ItemDto getItemById(Long itemId) {
-        List<CommentDto> comments = commentStorage.findByItemIdOrderByCreationDateAsc(itemId)
+    public ItemDtoForOwner getItemById(Long itemId) {
+        Item item = itemStorage.findById(itemId)
+                .orElseThrow(() -> new NotFoundException("item not found"));
+
+        List<CommentDto> comments = commentStorage.findByItemIdOrderByCreatedAsc(itemId)
                 .stream()
                 .map(CommentMapper::mapToCommentDto)
                 .toList();
 
         return ItemMapper.mapToItemDto(
-                itemStorage.findItemById(itemId),
+                item,
+                null,
+                null,
                 comments
                 );
     }
 
     public List<ItemDto> getItemsBySearch(String text) {
+        if (text.isBlank()) {
+            return Collections.emptyList();
+        }
+
         return itemStorage.search(text)
                 .stream()
                 .map(ItemMapper::mapToItemDto)
                 .toList();
     }
 
+    @Transactional
     public CommentDto addComment(Long userId, Long itemId, CommentRequestDto request) {
         validateUser(userId);
         validateItemExisting(itemId);
 
         Booking booking = bookingStorage
-                .findByOwnerIdAndItemId(userId, itemId)
+                .findByBookerIdAndItemId(userId, itemId)
                 .orElseThrow(() ->
                         new ValidateException("user with id: " + userId + " doesn't book item with id: " + itemId));
 
         if (booking.getStatus() != BookingStatus.APPROVED
-                || booking.getEndDate().toLocalDate().isAfter(LocalDate.now())) {
+                || booking.getEndDate().isAfter(LocalDateTime.now())) {
             String message;
 
             if (booking.getStatus() != BookingStatus.APPROVED) {
@@ -154,7 +177,7 @@ public class ItemService {
         if (id == null) {
             throw new ValidateException("id isn't correct");
         }
-        if (userStorage.findUserById(id).getId() == 0) {
+        if (!userStorage.existsById(id)) {
             throw new NotFoundException("user not found");
         }
     }
@@ -165,20 +188,6 @@ public class ItemService {
         }
         if (!itemStorage.existsById(id)) {
             throw new NotFoundException("item not found");
-        }
-    }
-
-    private void validateUpdateRequest(Long ownerId, Long itemId) {
-        validateUser(ownerId);
-
-        if (itemId == null) {
-            throw new ValidateException("id isn't correct");
-        }
-        if (itemStorage.findItemById(itemId).getId() == 0) {
-            throw new NotFoundException("item not found");
-        }
-        if (!Objects.equals(itemStorage.findItemById(itemId).getOwner(), ownerId)) {
-            throw new ValidateException("Email is already exist");
         }
     }
 }

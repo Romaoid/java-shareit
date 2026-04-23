@@ -35,7 +35,4 @@ public class Booking {
 
     @Enumerated(value = EnumType.STRING)
     private BookingStatus status;
-
-//    @Column(name = "creating_date")
-//    private Instant creatingDate = Instant.now();
 }

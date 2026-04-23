@@ -5,7 +5,6 @@ import lombok.NoArgsConstructor;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.dto.UserRequestCreate;
-import ru.practicum.shareit.user.dto.UserRequestUpdate;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class UserMapper {
@@ -25,19 +24,6 @@ public class UserMapper {
 
         user.setName(userRequestCreate.getName());
         user.setEmail(userRequestCreate.getEmail());
-
-        return user;
-    }
-
-    public static User mapUserFromUpdateReq(UserRequestUpdate userRequestUpdate) {
-        User user = new User();
-
-        if (userRequestUpdate.isNameNotNull()) {
-            user.setName(userRequestUpdate.getName());
-        }
-        if (userRequestUpdate.isEmailNotNull()) {
-            user.setEmail(userRequestUpdate.getEmail());
-        }
 
         return user;
     }

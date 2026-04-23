@@ -26,18 +26,6 @@ public class ItemMapper {
         return dto;
     }
 
-    public static ItemDto mapToItemDto(Item item, List<CommentDto> comments) {
-        ItemDto dto = new ItemDto();
-
-        dto.setId(item.getId());
-        dto.setAvailable(item.getAvailable());
-        dto.setDescription(item.getDescription());
-        dto.setName(item.getName());
-        dto.setComments(comments);
-
-        return dto;
-    }
-
     public static ItemDtoForOwner mapToItemDto(Item item,
                                                LocalDateTime lastBooking,
                                                LocalDateTime nextBooking,
@@ -64,8 +52,7 @@ public class ItemMapper {
         return item;
     }
 
-    public static Item mapItemFromUpdateReq(ItemRequestUpdate itemRequestUpdate) {
-        Item item = new Item();
+    public static Item mapItemFromUpdateReq(Item item, ItemRequestUpdate itemRequestUpdate) {
 
         if (itemRequestUpdate.isNameNotNull()) {
             item.setName(itemRequestUpdate.getName());

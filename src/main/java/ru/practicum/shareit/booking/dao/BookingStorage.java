@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Query;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.dto.BookingView;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,7 +27,7 @@ public interface BookingStorage extends JpaRepository<Booking, Long> {
             "join fetch b.booker " +
             "where b.booker.id = ?1 " +
             "and b.item.id = ?2")
-    Optional<Booking> findByOwnerIdAndItemId(Long ownerId, Long itemId);
+    Optional<Booking> findByBookerIdAndItemId(Long bookerId, Long itemId);
 
     @Query("select b " +
             "from Booking b " +
@@ -56,8 +57,8 @@ public interface BookingStorage extends JpaRepository<Booking, Long> {
             "from Booking b " +
             "where b.booker.id = ?1 " +
             "and b.status = 'APPROVED' " +
-            "and b.startDate <= now() " +
-            "and b.endDate >= now() " +
+            "and b.startDate <= CURRENT_TIMESTAMP " +
+            "and b.endDate >= CURRENT_TIMESTAMP " +
             "order by b.startDate desc")
     List<Booking> findAllCurrentByBookerId(Long bookerId);
 
@@ -65,7 +66,7 @@ public interface BookingStorage extends JpaRepository<Booking, Long> {
             "from Booking b " +
             "where b.booker.id = ?1 " +
             "and b.status = 'APPROVED' " +
-            "and b.endDate < now() " +
+            "and b.endDate < CURRENT_TIMESTAMP " +
             "order by b.startDate desc")
     List<Booking> findAllPastByBookerId(Long bookerId);
 
@@ -73,7 +74,7 @@ public interface BookingStorage extends JpaRepository<Booking, Long> {
             "from Booking b " +
             "where b.booker.id = ?1 " +
             "and b.status = 'APPROVED' " +
-            "and b.startDate > now() " +
+            "and b.startDate > CURRENT_TIMESTAMP " +
             "order by b.startDate desc")
     List<Booking> findAllFutureByBookerId(Long bookerId);
 
@@ -95,18 +96,30 @@ public interface BookingStorage extends JpaRepository<Booking, Long> {
     List<Booking> findAllByOwnerIdAndStatusIsOrderByStartDateDesc(Long ownerId, String status);
 
     @Query("SELECT b.item.id, MAX(b.endDate) FROM Booking b " +
-            "WHERE b.item.owner.id = ?1 " +
+            "WHERE b.item.owner = ?1 " +
             "AND b.status = 'APPROVED' " +
             "AND b.endDate < CURRENT_TIMESTAMP " +
             "GROUP BY b.item.id")
     List<Object[]> findLastBookingDatesByOwnerId(Long ownerId);
 
+    @Query("SELECT MAX(b.endDate) FROM Booking b " +
+            "WHERE b.item.id = ?1 " +
+            "AND b.status = 'APPROVED' " +
+            "AND b.endDate < CURRENT_TIMESTAMP")
+    Optional<LocalDateTime> findLastBookingDateByItemId(Long itemId);
+
     @Query("SELECT b.item.id, MIN(b.startDate) FROM Booking b " +
-            "WHERE b.item.owner.id = ?1 " +
+            "WHERE b.item.owner = ?1 " +
             "AND b.status = 'APPROVED' " +
             "AND b.startDate > CURRENT_TIMESTAMP " +
-            "GROUP BY b.item.id")
+            "GROUP BY b.item.id ")
     List<Object[]> findNextBookingDatesByOwnerId(Long ownerId);
+
+    @Query("SELECT MIN(b.startDate) FROM Booking b " +
+            "WHERE b.item.id = ?1 " +
+            "AND b.status = 'APPROVED' " +
+            "AND b.startDate > CURRENT_TIMESTAMP")
+    Optional<LocalDateTime> findNextBookingDateByItemId(Long itemId);
 
     @Query("select b " +
             "from Booking b " +
@@ -114,8 +127,8 @@ public interface BookingStorage extends JpaRepository<Booking, Long> {
             "join fetch b.booker " +
             "where b.item.owner = ?1 " +
             "and b.status = 'APPROVED' " +
-            "and b.startDate <= now() " +
-            "and b.endDate >= now() " +
+            "and b.startDate <= CURRENT_TIMESTAMP " +
+            "and b.endDate >= CURRENT_TIMESTAMP " +
             "order by b.startDate desc")
     List<Booking> findAllCurrentByOwnerId(Long ownerId);
 
@@ -125,7 +138,7 @@ public interface BookingStorage extends JpaRepository<Booking, Long> {
             "join fetch b.booker " +
             "where b.item.owner = ?1 " +
             "and b.status = 'APPROVED' " +
-            "and b.endDate < now() " +
+            "and b.endDate < CURRENT_TIMESTAMP " +
             "order by b.startDate desc")
     List<Booking> findAllPastByOwnerId(Long ownerId);
 
@@ -135,7 +148,7 @@ public interface BookingStorage extends JpaRepository<Booking, Long> {
             "join fetch b.booker " +
             "where b.item.owner= ?1 " +
             "and b.status = 'APPROVED' " +
-            "and b.startDate > now() " +
+            "and b.startDate > CURRENT_TIMESTAMP " +
             "order by b.startDate desc")
     List<Booking> findAllFutureByOwnerId(Long ownerId);
 }

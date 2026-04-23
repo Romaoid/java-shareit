@@ -1,7 +1,6 @@
 package ru.practicum.shareit.booking.controller;
 
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -28,7 +27,7 @@ public class BookingController {
     @PatchMapping("/{bookingId:\\d+}")
     public BookingDto updateBookingStatus(@RequestHeader(HttpHeaders.X_SHARER_USER_ID) long ownerId,
                                           @PathVariable("bookingId") long bookingId,
-                                          @NotBlank @RequestParam("approved") String newStatus) {
+                                          @RequestParam("approved") String newStatus) {
         return bookingService.updateBookingStatus(ownerId, bookingId, newStatus);
     }
 
