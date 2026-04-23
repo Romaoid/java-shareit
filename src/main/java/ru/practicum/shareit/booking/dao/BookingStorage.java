@@ -46,7 +46,7 @@ public interface BookingStorage extends JpaRepository<Booking, Long> {
     @Query("select b " +
             "from Booking b " +
             "where b.booker.id = ?1 " +
-            "and b.status = \"APPROVED\" " +
+            "and b.status = 'APPROVED' " +
             "and b.startDate <= now() " +
             "and b.endDate >= now() " +
             "order by b.startDate desc")
@@ -55,7 +55,7 @@ public interface BookingStorage extends JpaRepository<Booking, Long> {
     @Query("select b " +
             "from Booking b " +
             "where b.booker.id = ?1 " +
-            "and b.status = \"APPROVED\" " +
+            "and b.status = 'APPROVED' " +
             "and b.endDate < now() " +
             "order by b.startDate desc")
     List<Booking> findAllPastByBookerId(Long bookerId);
@@ -63,7 +63,7 @@ public interface BookingStorage extends JpaRepository<Booking, Long> {
     @Query("select b " +
             "from Booking b " +
             "where b.booker.id = ?1 " +
-            "and b.status = \"APPROVED\" " +
+            "and b.status = 'APPROVED' " +
             "and b.startDate > now() " +
             "order by b.startDate desc")
     List<Booking> findAllFutureByBookerId(Long bookerId);
@@ -85,12 +85,26 @@ public interface BookingStorage extends JpaRepository<Booking, Long> {
             "order by b.startDate desc")
     List<Booking> findAllByOwnerIdAndStatusIsOrderByStartDateDesc(Long ownerId, String status);
 
+    @Query("SELECT b.item.id, MAX(b.endDate) FROM Booking b " +
+            "WHERE b.item.owner.id = ?1 " +
+            "AND b.status = 'APPROVED' " +
+            "AND b.endDate < CURRENT_TIMESTAMP " +
+            "GROUP BY b.item.id")
+    List<Object[]> findLastBookingDatesByOwnerId(Long ownerId);
+
+    @Query("SELECT b.item.id, MIN(b.startDate) FROM Booking b " +
+            "WHERE b.item.owner.id = ?1 " +
+            "AND b.status = 'APPROVED' " +
+            "AND b.startDate > CURRENT_TIMESTAMP " +
+            "GROUP BY b.item.id")
+    List<Object[]> findNextBookingDatesByOwnerId(Long ownerId);
+
     @Query("select b " +
             "from Booking b " +
             "join fetch b.item " +
             "join fetch b.booker " +
             "where b.item.owner = ?1 " +
-            "and b.status = \"APPROVED\" " +
+            "and b.status = 'APPROVED' " +
             "and b.startDate <= now() " +
             "and b.endDate >= now() " +
             "order by b.startDate desc")
@@ -101,7 +115,7 @@ public interface BookingStorage extends JpaRepository<Booking, Long> {
             "join fetch b.item " +
             "join fetch b.booker " +
             "where b.item.owner = ?1 " +
-            "and b.status = \"APPROVED\" " +
+            "and b.status = 'APPROVED' " +
             "and b.endDate < now() " +
             "order by b.startDate desc")
     List<Booking> findAllPastByOwnerId(Long ownerId);
@@ -111,7 +125,7 @@ public interface BookingStorage extends JpaRepository<Booking, Long> {
             "join fetch b.item " +
             "join fetch b.booker " +
             "where b.item.owner= ?1 " +
-            "and b.status = \"APPROVED\" " +
+            "and b.status = 'APPROVED' " +
             "and b.startDate > now() " +
             "order by b.startDate desc")
     List<Booking> findAllFutureByOwnerId(Long ownerId);

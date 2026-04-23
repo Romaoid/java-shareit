@@ -3,9 +3,12 @@ package ru.practicum.shareit.item.mapper;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import ru.practicum.shareit.item.dto.ItemDto;
+import ru.practicum.shareit.item.dto.ItemDtoForOwner;
 import ru.practicum.shareit.item.dto.ItemRequestCreate;
 import ru.practicum.shareit.item.dto.ItemRequestUpdate;
 import ru.practicum.shareit.item.model.Item;
+
+import java.time.LocalDateTime;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class ItemMapper {
@@ -17,6 +20,20 @@ public class ItemMapper {
         dto.setAvailable(item.getAvailable());
         dto.setDescription(item.getDescription());
         dto.setName(item.getName());
+
+        return dto;
+    }
+
+    public static ItemDtoForOwner mapToItemDto(Item item,
+                                               LocalDateTime lastBooking, LocalDateTime nextBooking) {
+        ItemDtoForOwner dto = new ItemDtoForOwner();
+
+        dto.setId(item.getId());
+        dto.setAvailable(item.getAvailable());
+        dto.setDescription(item.getDescription());
+        dto.setName(item.getName());
+        dto.setLastBooking(lastBooking);
+        dto.setNextBooking(nextBooking);
 
         return dto;
     }

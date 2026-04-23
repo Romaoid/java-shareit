@@ -6,15 +6,13 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.item.controller.constants.HttpHeaders;
 import ru.practicum.shareit.item.dto.ItemDto;
+import ru.practicum.shareit.item.dto.ItemDtoForOwner;
 import ru.practicum.shareit.item.dto.ItemRequestCreate;
 import ru.practicum.shareit.item.dto.ItemRequestUpdate;
 import ru.practicum.shareit.item.service.ItemService;
 
 import java.util.List;
 
-/**
- * TODO Sprint add-controllers.
- */
 @RestController
 @Validated
 @RequestMapping("/items")
@@ -36,7 +34,7 @@ public class ItemController {
     }
 
     @GetMapping
-    public List<ItemDto> getItems(@RequestHeader(HttpHeaders.X_SHARER_USER_ID) long userId) {
+    public List<ItemDtoForOwner> getItems(@RequestHeader(HttpHeaders.X_SHARER_USER_ID) long userId) {
         return itemService.getItemsByOwnerId(userId);
     }
 
