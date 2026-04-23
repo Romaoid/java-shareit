@@ -5,8 +5,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.dao.BookingStorage;
 import ru.practicum.shareit.booking.model.Booking;
+import ru.practicum.shareit.booking.model.BookingStatus;
 import ru.practicum.shareit.error.exception.NotFoundException;
 import ru.practicum.shareit.error.exception.ValidateException;
+import ru.practicum.shareit.item.comment.*;
 import ru.practicum.shareit.item.dao.ItemStorage;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.dto.ItemDtoForOwner;
@@ -18,7 +20,6 @@ import ru.practicum.shareit.user.dao.UserStorage;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -31,6 +32,7 @@ public class ItemService {
     private ItemStorage itemStorage;
     private UserStorage userStorage;
     private BookingStorage bookingStorage;
+    private CommentStorage commentStorage;
 
 //    @Autowired
 //    public ItemService(ItemStorage itemStorage,
@@ -41,7 +43,7 @@ public class ItemService {
 
     @Transactional
     public ItemDto addItem(Long ownerId, ItemRequestCreate newItem) {
-        validateOwner(ownerId);
+        validateUser(ownerId);
 
         Item addedItem = ItemMapper.mapItemFromCreateReq(newItem);
         addedItem.setOwner(ownerId);
@@ -65,7 +67,7 @@ public class ItemService {
     }
 
     public List<ItemDtoForOwner> getItemsByOwnerId(Long ownerId) {
-        validateOwner(ownerId);
+        validateUser(ownerId);
 
         Map<Long, LocalDateTime> lastBookings = bookingStorage
                 .findLastBookingDatesByOwnerId(ownerId)
@@ -88,14 +90,25 @@ public class ItemService {
                 .map(item -> ItemMapper.mapToItemDto(
                         item,
                         lastBookings.get(item.getId()),
-                        nextBookings.get(item.getId())
+                        nextBookings.get(item.getId()),
+                        commentStorage.findByItemIdOrderByCreationDateAsc(item.getId())
+                                .stream()
+                                .map(CommentMapper::mapToCommentDto)
+                                .toList()
                 ))
                 .toList();
     }
 
     public ItemDto getItemById(Long itemId) {
+        List<CommentDto> comments = commentStorage.findByItemIdOrderByCreationDateAsc(itemId)
+                .stream()
+                .map(CommentMapper::mapToCommentDto)
+                .toList();
+
         return ItemMapper.mapToItemDto(
-                itemStorage.findItemById(itemId));
+                itemStorage.findItemById(itemId),
+                comments
+                );
     }
 
     public List<ItemDto> getItemsBySearch(String text) {
@@ -105,7 +118,39 @@ public class ItemService {
                 .toList();
     }
 
-    private void validateOwner(Long id) {
+    public CommentDto addComment(Long userId, Long itemId, CommentRequestDto request) {
+        validateUser(userId);
+        validateItemExisting(itemId);
+
+        Booking booking = bookingStorage
+                .findByOwnerIdAndItemId(userId, itemId)
+                .orElseThrow(() ->
+                        new ValidateException("user with id: " + userId + " doesn't book item with id: " + itemId));
+
+        if (booking.getStatus() != BookingStatus.APPROVED
+                || booking.getEndDate().toLocalDate().isAfter(LocalDate.now())) {
+            String message;
+
+            if (booking.getStatus() != BookingStatus.APPROVED) {
+                message = String.format("Status of booking %d doesn't approve", booking.getId());
+            } else {
+                message = "You can leave a comment after completing your booking";
+            }
+
+            throw new ValidateException(message);
+        }
+
+        Comment comment = new Comment();
+        comment.setComment(request.getText());
+        comment.setItem(booking.getItem());
+        comment.setAuthor(booking.getBooker());
+
+        return CommentMapper.mapToCommentDto(
+                commentStorage.save(comment)
+        );
+    }
+
+    private void validateUser(Long id) {
         if (id == null) {
             throw new ValidateException("id isn't correct");
         }
@@ -114,8 +159,17 @@ public class ItemService {
         }
     }
 
+    private void validateItemExisting(Long id) {
+        if (id == null) {
+            throw new ValidateException("id isn't correct");
+        }
+        if (!itemStorage.existsById(id)) {
+            throw new NotFoundException("item not found");
+        }
+    }
+
     private void validateUpdateRequest(Long ownerId, Long itemId) {
-        validateOwner(ownerId);
+        validateUser(ownerId);
 
         if (itemId == null) {
             throw new ValidateException("id isn't correct");

@@ -6,6 +6,7 @@ import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.dto.BookingView;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface BookingStorage extends JpaRepository<Booking, Long> {
     @Query("select b.id as id, " +
@@ -18,6 +19,14 @@ public interface BookingStorage extends JpaRepository<Booking, Long> {
             "b.booker.name as bookerName " +
             "from Booking b where b.id = ?1")
     BookingView findBookViewById(Long id);
+
+    @Query("select b " +
+            "from Booking b " +
+            "join fetch b.item " +
+            "join fetch b.booker " +
+            "where b.booker.id = ?1 " +
+            "and b.item.id = ?2")
+    Optional<Booking> findByOwnerIdAndItemId(Long ownerId, Long itemId);
 
     @Query("select b " +
             "from Booking b " +

@@ -1,5 +1,6 @@
 package ru.practicum.shareit.booking.controller;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -11,9 +12,6 @@ import ru.practicum.shareit.item.controller.constants.HttpHeaders;
 
 import java.util.List;
 
-/**
- * TODO Sprint add-bookings.
- */
 @RestController
 @Validated
 @RequestMapping(path = "/bookings")
@@ -23,7 +21,7 @@ public class BookingController {
 
     @PostMapping
     public BookingDto addBooking(@RequestHeader(HttpHeaders.X_SHARER_USER_ID) long bookerId,
-                                 @RequestBody BookingRequest request) {
+                                 @Valid @RequestBody BookingRequest request) {
         return bookingService.addBooking(bookerId, request);
     }
 
