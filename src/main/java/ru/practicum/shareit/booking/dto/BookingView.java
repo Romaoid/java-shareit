@@ -6,11 +6,18 @@ import java.time.LocalDateTime;
 
 public interface BookingView {
     Long getId();
+
     LocalDateTime getStartDate();
+
     LocalDateTime getEndDate();
+
     BookingStatus getStatus();
+
     Long getItemId();
+
     String getItemName();
+
     Long getBookerId();
+
     String getBookerName();
 }
