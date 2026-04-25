@@ -13,7 +13,6 @@ import ru.practicum.shareit.user.mapper.UserMapper;
 import ru.practicum.shareit.user.model.User;
 
 @Service
-@Transactional(readOnly = true)
 public class UserService {
     private final UserStorage userStorage;
 
@@ -23,10 +22,10 @@ public class UserService {
     }
 
     public UserDto getUserById(Long id) {
-        if (hasUserInStorage(id)) {
-            return UserMapper.mapToUserDto(userStorage.findUserById(id));
-        }
-        return null;
+            return UserMapper.mapToUserDto(
+                    userStorage.findById(id)
+                            .orElseThrow(() -> new NotFoundException("user not found"))
+            );
     }
 
     @Transactional
@@ -54,22 +53,8 @@ public class UserService {
                 userStorage.save(updatedUser));
     }
 
-    @Transactional
     public void deleteUser(Long id) {
-        if (hasUserInStorage(id)) {
-            userStorage.deleteById(id);
-        }
-    }
-
-    private boolean hasUserInStorage(Long id) {
-        if (id == null) {
-            throw new ValidateException("id isn't correct");
-        }
-        if (!userStorage.existsById(id)) {
-            throw new NotFoundException("user not found");
-        }
-
-        return true;
+        userStorage.deleteById(id);
     }
 
     private void isMailInStorage(String email) {

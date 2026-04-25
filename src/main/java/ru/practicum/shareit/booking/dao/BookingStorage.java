@@ -33,13 +33,6 @@ public interface BookingStorage extends JpaRepository<Booking, Long> {
             "from Booking b " +
             "join fetch b.item " +
             "join fetch b.booker " +
-            "where b.id = ?1")
-    Booking findBookingById(long id);
-
-    @Query("select b " +
-            "from Booking b " +
-            "join fetch b.item " +
-            "join fetch b.booker " +
             "where b.booker.id = ?1 " +
             "order by b.startDate desc")
     List<Booking> findAllByBookerIdOrderByStartDateDesc(Long bookerId);

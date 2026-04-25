@@ -76,9 +76,9 @@ public class BookingService {
 
     public BookingDto getBookingById(Long userId, Long bookingId) {
         validateUserExisting(userId);
-        validateBookingExisting(bookingId);
 
-        Booking booking = bookingStorage.findBookingById(bookingId);
+        Booking booking = bookingStorage.findById(bookingId)
+                .orElseThrow(() -> new NotFoundException("booking not found"));
         validateUserIsOwnerOrBooker(userId, booking.getBooker().getId(), booking.getItem().getOwner());
 
         return BookingMapper.mapToBookingDto(booking);
@@ -152,15 +152,6 @@ public class BookingService {
         //Available == true
         if (item.getAvailable() == false) {
             throw new ValidateException("item is unavailable");
-        }
-    }
-
-    private void validateBookingExisting(Long id) {
-        if (id == null) {
-            throw new ValidateException("id isn't correct");
-        }
-        if (!bookingStorage.existsById(id)) {
-            throw new NotFoundException("booking not found");
         }
     }
 
