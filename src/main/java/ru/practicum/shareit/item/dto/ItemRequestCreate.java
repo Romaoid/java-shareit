@@ -12,4 +12,6 @@ public class ItemRequestCreate {
     private String name;
     @NotNull(message = "Available field is required")
     private Boolean available;
+
+    private Long requestId;
 }

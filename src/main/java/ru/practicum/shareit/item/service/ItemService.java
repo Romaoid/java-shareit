@@ -1,6 +1,6 @@
 package ru.practicum.shareit.item.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.dao.BookingStorage;
@@ -16,6 +16,8 @@ import ru.practicum.shareit.item.dto.ItemRequestCreate;
 import ru.practicum.shareit.item.dto.ItemRequestUpdate;
 import ru.practicum.shareit.item.mapper.ItemMapper;
 import ru.practicum.shareit.item.model.Item;
+import ru.practicum.shareit.request.dao.RequestStorage;
+import ru.practicum.shareit.request.model.ItemRequest;
 import ru.practicum.shareit.user.dao.UserStorage;
 
 import java.time.LocalDateTime;
@@ -27,18 +29,13 @@ import java.util.stream.Collectors;
 
 @Service
 @Transactional(readOnly = true)
+@RequiredArgsConstructor
 public class ItemService {
-    @Autowired
-    private ItemStorage itemStorage;
-
-    @Autowired
-    private UserStorage userStorage;
-
-    @Autowired
-    private BookingStorage bookingStorage;
-
-    @Autowired
-    private CommentStorage commentStorage;
+    private final RequestStorage requestStorage;
+    private final ItemStorage itemStorage;
+    private final UserStorage userStorage;
+    private final BookingStorage bookingStorage;
+    private final CommentStorage commentStorage;
 
     @Transactional
     public ItemDto addItem(Long ownerId, ItemRequestCreate newItem) {
@@ -48,6 +45,14 @@ public class ItemService {
         addedItem.setOwner(ownerId);
 
         addedItem = itemStorage.save(addedItem);
+
+        if (newItem.getRequestId() != null) {
+            if (!requestStorage.existsById(newItem.getRequestId())) {
+                throw new NotFoundException("Request not found");
+            }
+
+            requestStorage.addItemToRequest(newItem.getRequestId(), addedItem.getId());
+        }
 
         return  ItemMapper.mapToItemDto(addedItem);
     }
