@@ -1,8 +1,8 @@
 package ru.practicum.shareit.user.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.error.exception.NotFoundException;
 import ru.practicum.shareit.error.exception.ValidateException;
 import ru.practicum.shareit.user.dao.UserStorage;
@@ -17,53 +17,44 @@ public class UserService {
     private final UserStorage userStorage;
 
     @Autowired
-    public UserService(@Qualifier("UserStorTemp") UserStorage userStorage) {
+    public UserService(UserStorage userStorage) {
         this.userStorage = userStorage;
     }
 
     public UserDto getUserById(Long id) {
-        if (hasUserInStorage(id)) {
-            return UserMapper.mapToUserDto(userStorage.getUserById(id));
-        }
-        return null;
+            return UserMapper.mapToUserDto(
+                    userStorage.findById(id)
+                            .orElseThrow(() -> new NotFoundException("user not found"))
+            );
     }
 
+    @Transactional
     public UserDto addUser(UserRequestCreate newUser) {
         isMailInStorage(newUser.getEmail());
 
         return UserMapper.mapToUserDto(
-                userStorage.addUser(
+                userStorage.save(
                         UserMapper.mapUserFromCreateReq(newUser)));
     }
 
+    @Transactional
     public UserDto updateUser(Long id, UserRequestUpdate updateUser) {
-        hasUserInStorage(id);
-        if (updateUser.getEmail() != null && !updateUser.getEmail().equals(userStorage.getUserById(id).getEmail())) {
+        User updatedUser = userStorage.findById(id)
+                .orElseThrow(() -> new NotFoundException("user not found"));
+
+        if (updateUser.getEmail() != null && !updateUser.getEmail().equals(updatedUser.getEmail())) {
             isMailInStorage(updateUser.getEmail());
         }
 
-        User user = UserMapper.mapUserFromUpdateReq(updateUser);
-        user.setId(id);
+        if (updateUser.isNameNotNull()) updatedUser.setName(updateUser.getName());
+        if (updateUser.isEmailNotNull()) updatedUser.setEmail(updateUser.getEmail());
 
         return UserMapper.mapToUserDto(
-                userStorage.updateUser(user));
+                userStorage.save(updatedUser));
     }
 
     public void deleteUser(Long id) {
-        if (hasUserInStorage(id)) {
-            userStorage.deleteUser(id);
-        }
-    }
-
-    private boolean hasUserInStorage(Long id) {
-        if (id == null) {
-            throw new ValidateException("id isn't correct");
-        }
-        if (userStorage.getUserById(id).getId() == 0) {
-            throw new NotFoundException("user not found");
-        }
-
-        return true;
+        userStorage.deleteById(id);
     }
 
     private void isMailInStorage(String email) {
@@ -71,11 +62,7 @@ public class UserService {
             throw new ValidateException("Email isn't correct");
         }
 
-        long usersWithEmail = userStorage.getUsers()
-                .stream()
-                .filter(user -> user.getEmail().equals(email))
-                .count();
-        if (usersWithEmail > 0) {
+        if (userStorage.findByEmail(email).isPresent()) {
             throw new RuntimeException("Email already exist!");
         }
     }

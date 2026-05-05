@@ -1,22 +1,12 @@
 package ru.practicum.shareit.user.dao;
 
+import org.springframework.data.jpa.repository.JpaRepository;
 import ru.practicum.shareit.user.model.User;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.Optional;
 
-public interface UserStorage {
-    Map<Long, User> userStorage = new HashMap<>();
+public interface UserStorage extends JpaRepository<User, Long> {
 
-    User getUserById(Long id);
-
-    List<User> getUsers();
-
-    User addUser(User user);
-
-    User updateUser(User user);
-
-    void deleteUser(Long id);
+    Optional<User> findByEmail(String email);
 
 }
