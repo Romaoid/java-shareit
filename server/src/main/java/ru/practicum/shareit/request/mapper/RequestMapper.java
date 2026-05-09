@@ -4,15 +4,15 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import ru.practicum.shareit.item.mapper.ItemMapper;
 import ru.practicum.shareit.request.dto.AnswerRequestDto;
-import ru.practicum.shareit.request.dto.ItemRequestDto;
+import ru.practicum.shareit.request.dto.NewRequestDto;
 import ru.practicum.shareit.request.model.ItemRequest;
 
 import java.util.Collections;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class RequestMapper {
-    public static ItemRequestDto mapToDto(ItemRequest request) {
-        ItemRequestDto dto = new ItemRequestDto();
+    public static NewRequestDto mapToDto(ItemRequest request) {
+        NewRequestDto dto = new NewRequestDto();
 
         dto.setId(request.getId());
         dto.setDescription(request.getDescription());
@@ -27,7 +27,7 @@ public class RequestMapper {
         dto.setCreated(request.getCreated());
         dto.setId(request.getId());
         dto.setDescription(request.getDescription());
-        if (!request.getItems().isEmpty()) {
+        if (request.getItems() != null && !request.getItems().isEmpty()) {
             dto.setItems(request.getItems()
                     .stream()
                     .map(ItemMapper::mapToItemDtoForAnswerRequest)

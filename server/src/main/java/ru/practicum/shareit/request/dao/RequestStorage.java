@@ -17,7 +17,7 @@ public interface RequestStorage extends JpaRepository<ItemRequest, Long> {
 
     @Query("select r " +
             "from ItemRequest r " +
-            "join fetch r.items i " +
+            "left join fetch r.items i " +
             "where r.author.id <> ?1")
     List<ItemRequest> findAllByAuthorIdIsNot(long id);
 

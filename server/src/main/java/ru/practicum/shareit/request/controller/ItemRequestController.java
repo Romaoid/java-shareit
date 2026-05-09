@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.item.controller.constants.HttpHeaders;
 import ru.practicum.shareit.request.dto.AnswerRequestDto;
-import ru.practicum.shareit.request.dto.ItemRequestDto;
+import ru.practicum.shareit.request.dto.NewRequestDto;
 import ru.practicum.shareit.request.service.ItemRequestService;
 
 import java.util.List;
@@ -16,8 +16,8 @@ public class ItemRequestController {
     private final ItemRequestService requestService;
 
     @PostMapping
-    public ItemRequestDto addRequest(@RequestHeader(HttpHeaders.X_SHARER_USER_ID) long authorId,
-                                     @RequestBody ItemRequestDto request) {
+    public NewRequestDto addRequest(@RequestHeader(HttpHeaders.X_SHARER_USER_ID) long authorId,
+                                    @RequestBody NewRequestDto request) {
         return requestService.addRequest(authorId, request);
     }
 
@@ -27,7 +27,7 @@ public class ItemRequestController {
     }
 
     @GetMapping("/all")
-    public List<ItemRequestDto> getRequestsOther(@RequestHeader(HttpHeaders.X_SHARER_USER_ID) long userId) {
+    public List<NewRequestDto> getRequestsOther(@RequestHeader(HttpHeaders.X_SHARER_USER_ID) long userId) {
         return requestService.getRequestsOther(userId);
     }
 

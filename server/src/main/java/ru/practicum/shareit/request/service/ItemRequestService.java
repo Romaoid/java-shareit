@@ -6,7 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.error.exception.NotFoundException;
 import ru.practicum.shareit.request.dao.RequestStorage;
 import ru.practicum.shareit.request.dto.AnswerRequestDto;
-import ru.practicum.shareit.request.dto.ItemRequestDto;
+import ru.practicum.shareit.request.dto.NewRequestDto;
 import ru.practicum.shareit.request.mapper.RequestMapper;
 import ru.practicum.shareit.request.model.ItemRequest;
 import ru.practicum.shareit.user.dao.UserStorage;
@@ -21,7 +21,7 @@ public class ItemRequestService {
     private final UserStorage userStorage;
 
     @Transactional
-    public ItemRequestDto addRequest(long authorId, ItemRequestDto request) {
+    public NewRequestDto addRequest(long authorId, NewRequestDto request) {
         ItemRequest ir = new ItemRequest();
         ir.setAuthor(userStorage.findById(authorId)
                 .orElseThrow(() -> new NotFoundException("User not found")));
@@ -40,7 +40,7 @@ public class ItemRequestService {
                 .toList();
     }
 
-    public List<ItemRequestDto> getRequestsOther(long userId) {
+    public List<NewRequestDto> getRequestsOther(long userId) {
         validateUserById(userId);
 
         return requestStorage.findAllByAuthorIdIsNot(userId)

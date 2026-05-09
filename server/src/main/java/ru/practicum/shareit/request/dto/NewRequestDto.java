@@ -5,7 +5,7 @@ import lombok.Data;
 import java.time.Instant;
 
 @Data
-public class ItemRequestDto {
+public class NewRequestDto {
     private Long id;
     private String description;
     private Instant created;

@@ -11,7 +11,7 @@ import java.time.Instant;
 import java.util.Set;
 
 @Entity
-@Table(name = "requests", schema = "public")
+@Table(name = "requests")
 @Getter
 @Setter
 @ToString

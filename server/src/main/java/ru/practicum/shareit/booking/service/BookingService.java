@@ -15,6 +15,7 @@ import ru.practicum.shareit.error.exception.ValidateException;
 import ru.practicum.shareit.item.dao.ItemStorage;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.dao.UserStorage;
+import ru.practicum.shareit.user.model.User;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,8 +37,17 @@ public class BookingService {
 
         validateBookingRequest(request);
 
-        Booking newBooking = bookingStorage.save(
-                BookingMapper.mapRequestToBooking(request));
+        Booking booking = BookingMapper.mapRequestToBooking(request);
+
+        User booker = userStorage.findById(bookerId)
+                .orElseThrow(() -> new NotFoundException("User not found"));
+        Item item = itemStorage.findById(request.getItemId())
+                .orElseThrow(() -> new NotFoundException("Item not found"));
+
+        booking.setBooker(booker);
+        booking.setItem(item);
+
+        Booking newBooking = bookingStorage.save(booking);
 
         return BookingMapper.mapToBookingDto(
                 bookingStorage.findBookViewById(
@@ -99,7 +109,10 @@ public class BookingService {
             default -> bookingList = new ArrayList<>();
         }
 
-        return bookingList.stream().map(BookingMapper::mapToBookingDto).toList();
+        return bookingList
+                .stream()
+                .map(BookingMapper::mapToBookingDto)
+                .toList();
     }
 
     public List<BookingDto> getBookingsByOwnerId(Long ownerId, String state) {

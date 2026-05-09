@@ -43,9 +43,11 @@ public class ItemMapper {
     public static ItemDtoForAnswerRequest mapToItemDtoForAnswerRequest(Item item) {
         ItemDtoForAnswerRequest dto = new ItemDtoForAnswerRequest();
 
-        dto.setId(item.getId());
-        dto.setName(item.getName());
-        dto.setOwnerId(item.getOwner());
+        if (item != null) {
+            dto.setId(item.getId());
+            dto.setName(item.getName());
+            dto.setOwnerId(item.getOwner());
+        }
 
         return dto;
     }
