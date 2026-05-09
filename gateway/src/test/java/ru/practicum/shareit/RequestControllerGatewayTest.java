@@ -18,6 +18,7 @@ import java.nio.charset.StandardCharsets;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -71,4 +72,35 @@ public class RequestControllerGatewayTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
     }
+
+    @Test
+    void getRequestsSelf_shouldReturn200() throws Exception {
+        when(requestClient.getRequestsSelf(anyLong()))
+                .thenReturn(ResponseEntity.ok().build());
+
+        mockMvc.perform(get("/requests")
+                        .header("X-Sharer-User-Id", 1))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void getRequestsOther_shouldReturn200() throws Exception {
+        when(requestClient.getRequestsOther(anyLong()))
+                .thenReturn(ResponseEntity.ok().build());
+
+        mockMvc.perform(get("/requests/all")
+                        .header("X-Sharer-User-Id", 1))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void getRequestById_shouldReturn200() throws Exception {
+        when(requestClient.getRequestById(anyLong(), anyLong()))
+                .thenReturn(ResponseEntity.ok().build());
+
+        mockMvc.perform(get("/requests/1")
+                        .header("X-Sharer-User-Id", 1))
+                .andExpect(status().isOk());
+    }
+
 }

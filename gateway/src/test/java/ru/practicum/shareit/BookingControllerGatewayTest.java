@@ -16,10 +16,9 @@ import ru.practicum.shareit.booking.dto.BookingDtoCreate;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(BookingControllerGateway.class)
@@ -109,5 +108,47 @@ public class BookingControllerGatewayTest {
                         .characterEncoding(StandardCharsets.UTF_8)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void getBookingsByBookerId_shouldReturn200() throws Exception {
+        when(bookingClient.getBookingsByBookerId(anyLong(), anyString()))
+                .thenReturn(ResponseEntity.ok().build());
+
+        mockMvc.perform(get("/bookings")
+                        .header("X-Sharer-User-Id", 1)
+                        .param("state", "ALL"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void getBookingsByOwnerId_shouldReturn200() throws Exception {
+        when(bookingClient.getBookingsByOwnerId(anyLong(), anyString()))
+                .thenReturn(ResponseEntity.ok().build());
+
+        mockMvc.perform(get("/bookings/owner")
+                        .header("X-Sharer-User-Id", 1)
+                        .param("state", "ALL"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void getBooking_shouldReturn200() throws Exception {
+        when(bookingClient.getBooking(anyLong(), anyLong()))
+                .thenReturn(ResponseEntity.ok().build());
+
+        mockMvc.perform(get("/bookings/1")
+                        .header("X-Sharer-User-Id", 1))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void updateBookingStatus_shouldReturn200() throws Exception {
+        when(bookingClient.updateBookingStatus(anyLong(), anyLong(), anyString()))
+                .thenReturn(ResponseEntity.ok().build());
+
+        mockMvc.perform(patch("/bookings/1?approved=true")
+                        .header("X-Sharer-User-Id", 1))
+                .andExpect(status().isOk());
     }
 }
