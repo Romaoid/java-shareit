@@ -1,4 +1,4 @@
-package ru.practicum.shareit.Integration;
+package ru.practicum.shareit.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;

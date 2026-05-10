@@ -1,4 +1,4 @@
-package ru.practicum.shareit.Integration;
+package ru.practicum.shareit.integration;
 
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.BeforeEach;
